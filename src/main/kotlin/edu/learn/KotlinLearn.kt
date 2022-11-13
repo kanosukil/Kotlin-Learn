@@ -131,7 +131,7 @@ class KotlinLearn(val id: Int, val name: String) {
         println("Type: ${whenType(obj)}")
         obj = this
         println("Type: ${whenType(obj)}")
-        // Unsafe 类型操作: as 中缀操作符
+        // Unsafe 类型操作: as 中缀操作符 (强制类型转换)
         val a: String? = try {
             obj as String?
         } catch (cce: ClassCastException) {

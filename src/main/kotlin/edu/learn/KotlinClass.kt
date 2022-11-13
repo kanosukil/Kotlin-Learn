@@ -355,6 +355,36 @@ open class CustomError : Error // can be extended wherever it's visible
  *
  * 密封类的限制对于间接子类不适用, 密封类的子类只要不是 sealed 修饰, 就可以根据可见性在任意地方扩展.
  *
- * 对于跨平台项目, 密封类的直接子类必须在同一个源集中.
+ * 对于跨平台项目, 密封类的直接子类必须在同一个源集中.(适用于没有 expect & actual 修饰符的 sealed 类)
+ * 对于在 common 源集中声明为 expect 并在 platform 源集中有 actual 实现的 sealed 类, expect & actual 版本中都可以有 sealed 的子类.
+ * 对于使用了层级结构的项目, 可以在 expect & actual 源集之间的任意位置创建 sealed 类的子类.
  */
+
+/**
+ * when 表达式下的 sealed 类
+ * 因为 sealed 类在当前 module 下的所有子类已知, 因此可以使用验证语句覆盖所有情况, 这就不需要使用 else 子句
+ * (只有使用 when 表达式时起作用, 使用 when 语句是无效的)
+ *
+ * 跨平台项目的 expect sealed class when 表达式仍需要 else 子句(不知道 actual 的子类)
+ */
+
+fun log(e: Error) = when (e) {
+    is FileReadError -> {
+        println("Error while reading file ${e.file}")
+    }
+
+    is DatabaseError -> {
+        println("Error while reading from database ${e.source}")
+    }
+
+    is RuntimeError -> {
+        println("Runtime error")
+    }
+
+    is CustomError -> {
+        println("Custom Error")
+    }
+    // the `else` clause is not required because all the cases are covered
+    // 因为列出了所有情况, 因此不需要 else 语句
+}
 
