@@ -282,7 +282,7 @@ fun handleStrings(list: MutableList<String>) {
 /**
  * 泛型函数的类型参数也只能用于编译时检查, 因此在函数体内不能使用类型参数的作为类型检查的依据 & 类型强制转换也是未经检测的.
  * 唯一可以使用类型参数的是带有具体类型的 inline 内联函数.
- * 但是泛型的限制仍适用于 泛型检查 以及 强制类型转换时的泛型类型实例.
+ * 但是泛型的限制仍适用于 泛型检查 以及 强制类型转换时的泛型类型实例(泛型占位的类型参数中还有泛型 -> 类型参数为 List<Int> 其中 Int 将被擦除)
  */
 
 inline fun <reified A, reified B> Pair<*, *>.asPairOf(): Pair<A, B>? {
@@ -319,6 +319,13 @@ fun genericsErasure() {
  * Unchecked Casts 未经检测的类型转换 -> 编译器不能检测出来
  * 若逻辑上可行, 才可以使用 Unchecked Cast
  * 但也要避免使用 unchecked cast, 因此需要重新设计程序结构
+ *
+ * 泛型函数的 reified 类型参数将会像 as 一样进行强制类型转换检测
+ *
+ * 可以使用 @Suppress("UNCHECKED_CAST") 注解暂且消除警告
+ *
+ * JVM 上,例 Array<Foo> 使用 foo as Array<List<String>?> 进行强制类型转换, 只要 foo 是包含 List<*> 的 Array 就会成功,
+ * 不管 foo 是否为空
  */
 fun readDictionary(file: File): Map<String, *> = file.inputStream().use {
     TODO("Read a mapping of strings to arbitrary elements.")
@@ -328,4 +335,37 @@ fun readDictionary(file: File): Map<String, *> = file.inputStream().use {
 val intsFile = File("ints.dictionary")
 
 // Warning: Unchecked cast: `Map<String, *>` to `Map<String, Int>`
+@Suppress("UNCHECKED_CAST")
 val intsDictionary: Map<String, Int> = readDictionary(intsFile) as Map<String, Int>
+
+/**
+ * 类型操作符 _
+ * 下划线操作符 _ 可以作为类型参数使用. 需要配合使用(其他类型被显式指定时, 编译器可以自动推断 _ 下划线实参的类型)
+ */
+abstract class SomeClass<T> {
+    abstract fun execute(): T
+}
+
+class SomeImplementation : SomeClass<String>() {
+    override fun execute(): String = "Test"
+}
+
+class OtherImplementation : SomeClass<Int>() {
+    override fun execute(): Int = 42
+}
+
+object Runner {
+    inline fun <reified S : SomeClass<T>, T> run(): T {
+        return S::class.java.getDeclaredConstructor().newInstance().execute()
+    }
+}
+
+fun underscore() {
+    // T is inferred as String because SomeImplementation derives from SomeClass<String>
+    val s = Runner.run<SomeImplementation, _>()
+    assert(s == "Test")
+
+    // T is inferred as Int because OtherImplementation derives from SomeClass<Int>
+    val n = Runner.run<OtherImplementation, _>()
+    assert(n == 42)
+}

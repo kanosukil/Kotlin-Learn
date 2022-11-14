@@ -8,11 +8,6 @@ import javax.sql.DataSource
  * @date 2022/11/12-10:59
  */
 
-fun main() {
-    val kc = KotlinClass()
-    kc.test()
-}
-
 class KotlinClass {
     fun test() {
         println("--------------------------------------------------")
@@ -388,3 +383,66 @@ fun log(e: Error) = when (e) {
     // 因为列出了所有情况, 因此不需要 else 语句
 }
 
+/**
+ * 嵌套类 & 内部类
+ */
+class OuterClass {
+    private val bar: Int = 1
+
+    class Nested {
+        fun foo() = 2
+    }
+
+    inner class Inner {
+        fun foo() = bar
+    }
+}
+
+val demo1 = OuterClass.Nested().foo() // == 2
+
+/**
+ * 类和接口可以相互嵌套
+ */
+interface OuterInterface {
+    class InnerClass
+    interface InnerInterface
+}
+
+class OuterClazz {
+    class InnerClass
+    interface InnerInterface
+}
+
+/**
+ * 内部类(使用 inner 关键字的嵌套类)
+ * 内部类可以访问外部类成员
+ */
+
+val demo2 = OuterClass().Inner().foo() // == 1
+
+/**
+ * 匿名内部类
+ * 通过 object 表达式创建
+ * JVM 上, 若需要实现的接口是函数式接口, 可以使用 lambda 表达式实现
+ */
+fun interface AnonymousInterface {
+    fun method()
+}
+
+class AnonymousInnerClass(args: AnonymousInterface)
+
+fun anonymousInnerClass() {
+    // 正常接口
+    val arg1 = AnonymousInnerClass(object : AnonymousInterface {
+        override fun method() {
+            TODO("静态内部类演示")
+        }
+    })
+    // 函数式接口
+    val arg2 = AnonymousInnerClass { println() }
+}
+
+
+fun main() {
+    KotlinClass().test()
+}
